@@ -8,56 +8,54 @@ compartilhadores = {}
 
 def handle_client(client_socket):
     try:
-        client_socket.send("Você quer (1) Cadastrar-se ou (2) Receber dados? (Digite 1 ou 2)\n".encode())
         option = client_socket.recv(1024).decode().strip()
+        print("sent option: ", option)
 
         if option == '1':
+            # Handle the client as a sharer
+            client_socket.send("Envie seu username:\n".encode())
             username = client_socket.recv(1024).decode().strip()
-
+            print("Received username:", username)
             if username in compartilhadores:
                 client_socket.send("Username já utilizado! Tente novamente.\n".encode())
             else:
                 compartilhadores[username] = {
                     'socket': client_socket,
-                    'dados': ''  # Inicializa os dados vazios
+                    'dados': ''
                 }
-                client_socket.send(f"Username {username} cadastrado com sucesso!\n".encode())
-                client_socket.send("Agora seus dados estão sendo compartilhados...\n".encode())
+                client_socket.send(f"sucesso!\n".encode())
+                #client_socket.send("Agora seus dados estão sendo compartilhados...\n".encode())
 
                 while True:
                     try:
-                        # O compartilhador envia os dados ao servidor
-                        data = client_socket.recv(4096).decode().strip()  # Espera dados do compartilhador
+                        data = client_socket.recv(4096).decode().strip()
                         if not data:
                             print(f"O usuário {username} desconectou.")
-                            break  # Sai do loop se a conexão for encerrada
-
-                        print(f"dados recebidos: {data}")
-                        compartilhadores[username]['dados'] = data  # Atualiza os dados do compartilhador
-
+                            break
+                        compartilhadores[username]['dados'] = data
                     except (ConnectionResetError, BrokenPipeError):
                         print(f"O usuário {username} se desconectou de forma abrupta.")
-                        break  # Sai do loop em caso de erro de conexão
-
-                    time.sleep(1)  # Ajuste o tempo conforme necessário
+                        break
+                    time.sleep(1)
 
         elif option == '2':
+            # Handle the client as a requester
+            client_socket.send("Envie seu username:\n".encode())
             username = client_socket.recv(1024).decode().strip()
-            print(f"username inputado: {username}")
-
+            print("Received username:", username)
             if username in compartilhadores:
                 client_socket.send(f"Conectado ao compartilhador {username}. Aguardando dados...\n".encode())
                 while True:
                     dados = compartilhadores[username]['dados']
-                    if dados:  # Verifica se há dados para enviar
+                    if dados:
                         client_socket.send(f"Dados de {username}: {dados}\n".encode())
-                    time.sleep(5)  # Evita flood e envia os dados a cada 5 segundos
+                    time.sleep(5)
             else:
                 client_socket.send("Username não encontrado.\n".encode())
-
     except Exception as e:
         print(f"Erro: {e}")
         client_socket.close()
+
 
 
 # Configuração do servidor

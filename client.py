@@ -1,87 +1,85 @@
+import flet as ft
 import socket
-import psutil  # Biblioteca para obter dados de uso de CPU, RAM, etc.
+import psutil
 import time
+import threading
 
-# Função para obter dados do sistema (CPU, RAM e GPU simulada)
 def get_system_data():
     cpu_usage = psutil.cpu_percent(interval=1)
     ram_usage = psutil.virtual_memory().percent
     gpu_usage = 45.5  # Simulação de uso de GPU
     return f"CPU: {cpu_usage}%, RAM: {ram_usage}%, GPU: {gpu_usage}%"
 
-# Função para registrar como compartilhador
-def register_as_sharer(client_socket):
-    username = input("Escolha um username único para se cadastrar como compartilhador: ")
+def register_as_sharer(client_socket, username, output):
+    print("Sending '1' for sharer registration")
+    client_socket.send("1".encode())  # Send "1" for sharer
+    response1 = client_socket.recv(1024).decode()
+    print("Response after sending '1':", response1)
+    
+    # Send the username immediately after receiving response1
+    print("Sending username:", username)
     client_socket.send(username.encode())
+    response2 = client_socket.recv(1024).decode()
+    print("Response after sending username:", response2)
     
-    response = client_socket.recv(1024).decode()
-    print(response)
-    
-    if "sucesso" in response:
-        print("Você agora está compartilhando seus dados do sistema...")
+    # Ensure response is correctly referenced
+    if "sucesso" in response2:
+        print("entrou no if")
+        output.controls.append(ft.Text("Você agora está compartilhando seus dados do sistema...\n"))
+        output.update()
         try:
             while True:
-                # Coleta e envia os dados do sistema a cada 5 segundos
                 system_data = get_system_data()
-                client_socket.send(system_data.encode())  # Envia os dados para o servidor
-                print(f"Enviando: {system_data}")
-                time.sleep(5)  # Intervalo de 5 segundos para envio dos dados
+                client_socket.send(system_data.encode())
+                output.controls.append(ft.Text(f"Enviando: {system_data}\n"))
+                output.update()
+                time.sleep(5)
         except KeyboardInterrupt:
-            print("Compartilhamento interrompido.")
+            output.controls.append(ft.Text("Compartilhamento interrompido.\n"))
+            output.update()
             client_socket.close()
     else:
-        print("Falha ao registrar o username. Tente novamente.")
+        output.controls.append(ft.Text("Falha ao registrar o username. Tente novamente.\n"))
+        output.update()
         client_socket.close()
 
-# Função para receber dados de um compartilhador específico
-def request_sharer_data(client_socket):
-    sharer_username = input("Digite o username do compartilhador cujos dados você quer acessar: ")
-    client_socket.send(sharer_username.encode())
 
+def request_sharer_data(client_socket, sharer_username, output):
+    client_socket.send(sharer_username.encode())
     try:
         while True:
-            # Recebe os dados do servidor e exibe
-            data = client_socket.recv(4096).decode()  # Aumente o buffer para 4096 bytes
-            print(f"o que chegou do server {data}")
+            data = client_socket.recv(4096).decode()
+            output.controls.append(ft.Text(f"o que chegou do server {data}\n"))
+            output.update()
             if not data:
-                print(f"Conexão encerrada com {sharer_username}.")
+                output.controls.append(ft.Text(f"Conexão encerrada com {sharer_username}.\n"))
+                output.update()
                 break
-
-            # Verifica se a mensagem está vazia ou não
-            if data.strip():  # Verifica se os dados não são vazios
-                print(data)  # Exibe os dados recebidos diretamente
-            else:
-                print(f"Nenhum dado recebido de {sharer_username}")
     except KeyboardInterrupt:
-        print("Conexão encerrada.")
         client_socket.close()
 
-
-
-# Função principal do cliente
-def main():
-    server_ip = input("Digite o IP do servidor: ")
-    server_port = 12345  # Porta do servidor
+def main(page: ft.Page):
+    page.title = "System Data Sharing Client"
     
-    # Cria socket de conexão
-    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client_socket.connect((server_ip, server_port))
-
-    # Recebe a mensagem inicial do servidor
-    response = client_socket.recv(1024).decode()
-    print(response)
+    username_input = ft.TextField(label="Username")
+    sharer_username_input = ft.TextField(label="Sharer Username")
+    output = ft.ListView(height=300, expand=True, spacing=10)
     
-    # Menu interativo
-    option = input("Escolha (1) para cadastrar-se ou (2) para receber dados: ")
-    client_socket.send(option.encode())
+    def on_register_click(e):
+        client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        client_socket.connect(("localhost", 12345))
+        register_as_sharer(client_socket, username_input.value, output)
 
-    if option == '1':
-        register_as_sharer(client_socket)
-    elif option == '2':
-        request_sharer_data(client_socket)
-    else:
-        print("Opção inválida!")
-        client_socket.close()
+    def on_request_click(e):
+        client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        client_socket.connect(("localhost", 12345))
+        client_socket.send("2".encode())  # Send "2" for requester
+        request_sharer_data(client_socket, sharer_username_input.value, output)
 
-if __name__ == "__main__":
-    main()
+    
+    register_button = ft.ElevatedButton(text="Register as Sharer", on_click=on_register_click)
+    request_button = ft.ElevatedButton(text="Request Sharer Data", on_click=on_request_click)
+    
+    page.add(username_input, register_button, sharer_username_input, request_button, output)
+
+ft.app(target=main)
