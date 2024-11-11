@@ -45,11 +45,18 @@ def register_as_sharer(client_socket, username, output):
 
 
 def request_sharer_data(client_socket, sharer_username, output):
+    client_socket.send("2".encode())  # Send "2" for requester
+    response1 = client_socket.recv(1024).decode()
+    print("Response after sending '2':", response1)
+
+    print("Sending username:", sharer_username)
     client_socket.send(sharer_username.encode())
+    response2 = client_socket.recv(1024).decode()
+    print("Response after sending username:", response2)
     try:
         while True:
             data = client_socket.recv(4096).decode()
-            output.controls.append(ft.Text(f"o que chegou do server {data}\n"))
+            output.controls.append(ft.Text(f"{data}\n"))
             output.update()
             if not data:
                 output.controls.append(ft.Text(f"Conexão encerrada com {sharer_username}.\n"))
@@ -73,7 +80,6 @@ def main(page: ft.Page):
     def on_request_click(e):
         client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         client_socket.connect(("localhost", 12345))
-        client_socket.send("2".encode())  # Send "2" for requester
         request_sharer_data(client_socket, sharer_username_input.value, output)
 
     
@@ -83,3 +89,4 @@ def main(page: ft.Page):
     page.add(username_input, register_button, sharer_username_input, request_button, output)
 
 ft.app(target=main)
+
