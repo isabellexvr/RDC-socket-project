@@ -1,39 +1,46 @@
-import toga
-from toga.style import Pack
-from toga.style.pack import COLUMN, CENTER, ROW
+import flet as ft
 
-def build(app):
-    # Main container box
-    main_box = toga.Box(style=Pack(direction=COLUMN, alignment=CENTER))
+def main(page: ft.Page):
+    page.title = "Routes Example"
 
-    # Elements: button and input
-    button = toga.Button('Submit', on_press=None)
-    input = toga.TextInput()
-    
-    main_box.add(input)
-    main_box.add(button)
+    def route_change(route):
+        page.views.clear()
+        page.views.append(
+            ft.View(
+                "/",
+                [
+                    ft.AppBar(title=ft.Text("MSI de Probe"), bgcolor=ft.colors.SURFACE_VARIANT),
+                    ft.ElevatedButton("Iniciar", on_click=lambda _: page.go("/server_ip")),
+                ],
+            )
+        )
+        if page.route == "/server_ip":
+            ip_input = ft.TextField(label="Server IP")
+            submit_button = ft.ElevatedButton("Submit", on_click=lambda _: submit_ip(ip_input.value))
+            page.views.append(
+                ft.View(
+                    "/server_ip",
+                    [
+                        ft.AppBar(title=ft.Text("Enter Server IP"), bgcolor=ft.colors.SURFACE_VARIANT),
+                        ip_input,
+                        submit_button,
+                        ft.ElevatedButton("Go Home", on_click=lambda _: page.go("/")),
+                    ],
+                )
+            )
+        page.update()
 
-    def show_new_box(widget):
-        # Create a new box with updated content and style
-        new_box = toga.Box(style=Pack(direction=ROW, background_color="#00FF00"))
-        
-        # Label to show the input's content
-        input_label = toga.Label(f"Input: {input.value}", style=Pack(padding=5))
-        button_delete = toga.Button('Delete', on_press=lambda widget: main_box.remove(new_box))
-        
-        # Add the label to the new box
-        new_box.add(input_label)
-        new_box.add(button_delete)
-        
-        # Add the new box to the main container
-        main_box.add(new_box)
-        main_box.refresh()  # Refresh layout to display the new box
+    def submit_ip(ip):
+        print(f"Server IP submitted: {ip}")
+        # Add your logic to handle the submitted IP here
 
-    # Set button action to show new box
-    button.on_press = show_new_box
+    def view_pop(view):
+        page.views.pop()
+        top_view = page.views[-1]
+        page.go(top_view.route)
 
-    return main_box
+    page.on_route_change = route_change
+    page.on_view_pop = view_pop
+    page.go(page.route)
 
-if __name__ == '__main__':
-    app = toga.App('Dynamic Box Example', 'org.beeware.dynamicbox', startup=build)
-    app.main_loop()
+ft.app(target=main)
