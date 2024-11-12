@@ -8,7 +8,7 @@ def get_system_data():
     cpu_usage = psutil.cpu_percent(interval=1)
     ram_usage = psutil.virtual_memory().percent
     gpu_usage = 45.5  # Simulação de uso de GPU
-    return f"{cpu_usage}|{ram_usage}|{gpu_usage} aaaaa"
+    return f"{cpu_usage}|{ram_usage}|{gpu_usage}"
 
 def register_as_sharer(client_socket, username, output_text):
     print("Sending '1' for sharer registration")
@@ -170,9 +170,9 @@ def main(page: ft.Page):
                 try:
                     while True:
                         data = client_socket.recv(4096).decode()
-                        teste = data.split("|")
+                        cpu, ram, gpu = data.split("|")
                         
-                        print(teste)
+                        print(f"CPU: {cpu}%\nRAM: {ram}%\nGPU: {gpu}%")
                         output_text.value = f"{data}\n"
                         output_text.update()
                         
