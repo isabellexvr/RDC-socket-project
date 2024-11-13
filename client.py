@@ -7,14 +7,19 @@ import threading
 def get_system_data():
     cpu_usage = psutil.cpu_percent(interval=1)
     ram_usage = psutil.virtual_memory().percent
-    gpu_usage = 45.5  # Simulação de uso de GPU
     disk_usage = psutil.disk_usage('/')
     total_disk = disk_usage.total / (1024 ** 3)
     used_disk = disk_usage.used / (1024 ** 3)
     percent_disk = disk_usage.percent
-    
+    battery = psutil.sensors_battery()
+    if battery:
+        battery_percent = battery.percent
+        is_plugged = battery.power_plugged
+    else:
+        battery_percent = 100.0
+        is_plugged = True
      
-    return f"{cpu_usage}|{ram_usage}|{gpu_usage}|{total_disk}|{used_disk}|{percent_disk}"
+    return f"{cpu_usage}|{ram_usage}|{battery_percent}|{total_disk}|{used_disk}|{percent_disk}|{is_plugged}"
 
 def register_as_sharer(client_socket, username, output_text):
     print("Sending '1' for sharer registration")
@@ -72,11 +77,12 @@ def main(page: ft.Page):
     # Inicializando os componentes de texto para CPU, RAM, e GPU
     cpu_text = ft.Text("40%", font_family="Space Grotesk", weight=ft.FontWeight.BOLD, size=20)
     ram_text = ft.Text("60%", font_family="Space Grotesk", weight=ft.FontWeight.BOLD, size=20)
-    gpu_text = ft.Text("60%", font_family="Space Grotesk", weight=ft.FontWeight.BOLD, size=20)
+    battery_text = ft.Text("100%", font_family="Space Grotesk", weight=ft.FontWeight.BOLD, size=20)
     disk_total_text = ft.Text("0", font_family="Space Grotesk")
     disk_usage_text = ft.Text("0", font_family="Space Grotesk")
     disk_percent_text = ft.Text("50", font_family="Space Grotesk", weight=ft.FontWeight.BOLD, size=20)
-    
+    battery_plug_text = ft.Text("True", font_family="Space Grotesk", size=15)
+    battery_status_icon = ft.Icon(name=ft.icons.BATTERY_CHARGING_FULL, color=ft.colors.WHITE)
     
     def route_change(route):
         page.views.clear()
@@ -206,6 +212,18 @@ def main(page: ft.Page):
         if page.route == "/show_data":
             output_text = ft.Text()
             disk_progress_bar = ft.ProgressBar(border_radius=4, bar_height=8, value=0, width=410)
+            
+            battery_plug_status = ft.Container(
+                content=ft.Row(
+                    controls=[
+                        battery_status_icon,
+                        battery_plug_text,
+                    ],
+                ),
+                padding=5,
+                width=400,
+                height=50,
+            )
             page.views.append(
             ft.View(
                 "/show_data",
@@ -218,6 +236,8 @@ def main(page: ft.Page):
                             controls=[
                                 output_text,
                                 disk_percent_text,
+                                battery_text,
+                                battery_plug_text,
                             ],
                         ),
                         visible=False  # Define o container como invisível
@@ -254,45 +274,49 @@ def main(page: ft.Page):
                                 border_radius=12,
                                 padding=15,
                             ),
-                            ft.Container(
-                                content=ft.Column(
-                                    controls=[
-                                        ft.Text("GPU Usage", size=15),
-                                        gpu_text,
-                                    ],# Adicionando os textos ao Column
-                                ),
-                                width=410,
-                                height=100,
-                                bgcolor="#293038",
-                                top=120,  # Position this container next to the first
-                                left=0,
-                                border_radius=12,
-                                padding=15,
-                            ),
-                            ft.Container(
-                                content=ft.Column(
-                                    controls=[
-                                        ft.Row(
+                            
+                            ft.Column(
+                                [
+                                    ft.Container(
+                                        content=ft.Column(
                                             controls=[
-                                                ft.Text("Storage", size=15),
+                                                ft.Text("Battery Status", size=15),
+                                                battery_text,
+                                                battery_plug_status,
+                                            ],# Adicionando os textos ao Column
+                                        ),
+                                        width=410,
+                                        height=150,
+                                        bgcolor="#293038",
+                                        border_radius=12,
+                                        padding=15,
+                                    ),
+                                    ft.Container(
+                                        content=ft.Column(
+                                            controls=[
                                                 ft.Row(
                                                     controls=[
-                                                        disk_usage_text,
-                                                        ft.Text("/"),
-                                                        disk_total_text,
+                                                        ft.Text("Storage", size=15),
+                                                        ft.Row(
+                                                            controls=[
+                                                                disk_usage_text,
+                                                                ft.Text("/"),
+                                                                disk_total_text,
+                                                            ],
+                                                            width=200,
+                                                        )
                                                     ],
-                                                    width=200,
-                                                )
+                                                    alignment=ft.MainAxisAlignment.SPACE_BETWEEN,  # Maximiza o espaço entre os textos
+                                                    width=400,
+                                                ),
+                                                disk_progress_bar,
                                             ],
-                                            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,  # Maximiza o espaço entre os textos
-                                            width=400,
                                         ),
-                                        disk_progress_bar,
-                                    ],
-                                ),
+                                    )
+                                ],
+                                top=120,  # Position this container next to the first
                                 left=0,
-                                top=240,
-                            )
+                            ),
                         ],
                         width=420,  # Set width of Stack to fit both containers
                         height=320,
@@ -307,28 +331,43 @@ def main(page: ft.Page):
                 try:
                     while True:
                         data = client_socket.recv(4096).decode()
-                        cpu, ram, gpu, disk_total, disk_used, disk_percent = data.split("|")
+                        cpu, ram, battery, disk_total, disk_used, disk_percent, battery_plug = data.split("|")
                         
-                        print(f"CPU: {cpu}%\nRAM: {ram}%\nGPU: {gpu}%\n[DISCO: {disk_used}/{disk_total}/{disk_percent}%]")                        
+                        if battery_plug == "True":
+                            battery_plug="Está conectado na tomada"
+                            battery_status_icon.name = ft.icons.BATTERY_CHARGING_FULL
+                        else:
+                            battery_plug="Não está conectado na tomada"
+                            battery_status_icon.name = ft.icons.BATTERY_FULL
+                        
+                        battery_status_icon.update()
+
+                        
+                        print(f"CPU: {cpu}%\nRAM: {ram}%\nBATERIA: {battery}%\n[DISCO: {disk_used}/{disk_total}/{disk_percent}%]\nTOMADA: {battery_plug}\n")                        
                          
                         cpu_text.value = f"{cpu}%"
                         ram_text.value = f"{ram}%"
-                        gpu_text.value = f"{gpu}%"
+                        battery_text.value = f"{battery}%"
                         disk_usage_text.value = f"{float(disk_used):.2f} GB"
                         disk_total_text.value = f"{float(disk_total):.2f} GB"
                         disk_percent_text.value = f"{disk_percent}"
+                        battery_plug_text.value = f"{battery_plug}"
 
                         disk_progress_bar.value = float(disk_percent) / 100  # Converte o valor em fração
                         disk_progress_bar.update()
+                                              
   
                         output_text.value = f"{data}\n"
                         output_text.update()
                         cpu_text.update()
                         ram_text.update()
-                        gpu_text.update()
+                        battery_text.update()
                         disk_usage_text.update()
                         disk_total_text.update()
                         disk_percent_text.update()
+                        battery_plug_text.update()
+                        
+
 
                         
                         if not data:
