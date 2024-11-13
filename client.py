@@ -238,6 +238,10 @@ def main(page: ft.Page):
                                 disk_percent_text,
                                 battery_text,
                                 battery_plug_text,
+                                cpu_text,
+                                ram_text,
+                                disk_total_text,
+                                disk_usage_text,
                             ],
                         ),
                         visible=False  # Define o container como invisível
@@ -321,7 +325,7 @@ def main(page: ft.Page):
                         width=420,  # Set width of Stack to fit both containers
                         height=320,
                     ),
-                    ft.ElevatedButton("Go Home", on_click=lambda _: page.go("/")),
+                    ft.ElevatedButton("Logout", on_click=lambda _: page.go("/home")),
                 ],
                 vertical_alignment=ft.MainAxisAlignment.CENTER,
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
