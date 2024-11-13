@@ -8,7 +8,13 @@ def get_system_data():
     cpu_usage = psutil.cpu_percent(interval=1)
     ram_usage = psutil.virtual_memory().percent
     gpu_usage = 45.5  # Simulação de uso de GPU
-    return f"{cpu_usage}|{ram_usage}|{gpu_usage}"
+    disk_usage = psutil.disk_usage('/')
+    total_disk = disk_usage.total / (1024 ** 3)
+    used_disk = disk_usage.used / (1024 ** 3)
+    percent_disk = disk_usage.percent
+    
+     
+    return f"{cpu_usage}|{ram_usage}|{gpu_usage}|{total_disk}|{used_disk}|{percent_disk}"
 
 def register_as_sharer(client_socket, username, output_text):
     print("Sending '1' for sharer registration")
@@ -59,6 +65,16 @@ def request_sharer_data(client_socket, sharer_username, output_text):
 
 def main(page: ft.Page):
     page.title = "System Data Sharing Client"
+    page.vertical_alignment = ft.VerticalAlignment.CENTER
+    page.horizontal_alignment = ft.alignment.center
+    
+    # Inicializando os componentes de texto para CPU, RAM, e GPU
+    cpu_text = ft.Text("40%", font_family="Space Grotesk", weight=ft.FontWeight.BOLD, size=20)
+    ram_text = ft.Text("60%", font_family="Space Grotesk", weight=ft.FontWeight.BOLD, size=20)
+    gpu_text = ft.Text("60%", font_family="Space Grotesk", weight=ft.FontWeight.BOLD, size=20)
+    disk_total_text = ft.Text("0", font_family="Space Grotesk")
+    disk_usage_text = ft.Text("0", font_family="Space Grotesk")
+    disk_percent_text = ft.Text("50", font_family="Space Grotesk", weight=ft.FontWeight.BOLD, size=20)
     
     
     def route_change(route):
@@ -70,6 +86,8 @@ def main(page: ft.Page):
                     ft.AppBar(title=ft.Text("MSI de Probe"), bgcolor=ft.colors.SURFACE_VARIANT),
                     ft.ElevatedButton("Iniciar", on_click=lambda _: page.go("/server_ip")),
                 ],
+                vertical_alignment=ft.MainAxisAlignment.CENTER,
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             )
         )
         if page.route == "/as_sharer":
@@ -89,6 +107,8 @@ def main(page: ft.Page):
                         register_button,
                         output_text,
                     ],
+                    vertical_alignment=ft.MainAxisAlignment.CENTER,
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 )
             )
         if page.route == "/requester":
@@ -125,7 +145,7 @@ def main(page: ft.Page):
                 )
             )
         if page.route == "/server_ip":
-            ip_input = ft.TextField(label="Server IP")
+            ip_input = ft.TextField(label="Server IP", width=500, border_color=ft.colors.WHITE)
             alert_text = ft.Text(color=ft.colors.RED)
             
             def submit_ip(ip):
@@ -140,7 +160,7 @@ def main(page: ft.Page):
                     alert_text.value = f"Erro ao conectar: {e}"
                     alert_text.update()
                 
-            submit_button = ft.ElevatedButton("Submit", on_click=lambda _: submit_ip(ip_input.value))
+            submit_button = ft.ElevatedButton("Submit", on_click=lambda _: submit_ip(ip_input.value), bgcolor=ft.colors.BLUE, color=ft.colors.WHITE)
             #home_button = ft.ElevatedButton("Vai", on_click=lambda _: page.go())
             page.views.append(
             ft.View(
@@ -152,31 +172,137 @@ def main(page: ft.Page):
                 alert_text,
                 ft.ElevatedButton("Go Home", on_click=lambda _: page.go("/")),
                 ],
+                vertical_alignment=ft.MainAxisAlignment.CENTER,
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             )
             )
         if page.route == "/show_data":
             output_text = ft.Text()
+            disk_progress_bar = ft.ProgressBar(border_radius=4, bar_height=8, value=0, width=410)
             page.views.append(
             ft.View(
                 "/show_data",
                 [
-                ft.AppBar(title=ft.Text("System Data"), bgcolor=ft.colors.SURFACE_VARIANT),
-                output_text,
-                ft.ElevatedButton("Go Home", on_click=lambda _: page.go("/")),
+                    ft.AppBar(title=ft.Text("System Data"),
+                    bgcolor=ft.colors.SURFACE_VARIANT),
+                    
+                    ft.Container(
+                        content=ft.Column(
+                            controls=[
+                                output_text,
+                                disk_percent_text,
+                            ],
+                        ),
+                        visible=False  # Define o container como invisível
+                    ),
+                    ft.Stack(
+                        [
+                            ft.Container(
+                                content=ft.Column(
+                                    controls=[
+                                        ft.Text("CPU Usage", size=15),
+                                        cpu_text,
+                                    ],  # Adicionando os textos ao Column
+                                ),
+                                width=200,
+                                height=100,
+                                bgcolor="#293038",
+                                left=0,  # Position at the start of the Stack
+                                top=0,
+                                border_radius=12,
+                                padding=15,
+                            ),  
+                            ft.Container(
+                                content=ft.Column(
+                                    controls=[
+                                        ft.Text("Memory Usage", size=15),
+                                        ram_text,
+                                    ],# Adicionando os textos ao Column
+                                ),
+                                width=200,
+                                height=100,
+                                bgcolor="#293038",
+                                left=210,  # Position this container next to the first
+                                top=0,
+                                border_radius=12,
+                                padding=15,
+                            ),
+                            ft.Container(
+                                content=ft.Column(
+                                    controls=[
+                                        ft.Text("GPU Usage", size=15),
+                                        gpu_text,
+                                    ],# Adicionando os textos ao Column
+                                ),
+                                width=410,
+                                height=100,
+                                bgcolor="#293038",
+                                top=120,  # Position this container next to the first
+                                left=0,
+                                border_radius=12,
+                                padding=15,
+                            ),
+                            ft.Container(
+                                content=ft.Column(
+                                    controls=[
+                                        ft.Row(
+                                            controls=[
+                                                ft.Text("Storage", size=15),
+                                                ft.Row(
+                                                    controls=[
+                                                        disk_usage_text,
+                                                        ft.Text("/"),
+                                                        disk_total_text,
+                                                    ],
+                                                    width=200,
+                                                )
+                                            ],
+                                            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,  # Maximiza o espaço entre os textos
+                                            width=400,
+                                        ),
+                                        disk_progress_bar,
+                                    ],
+                                ),
+                                left=0,
+                                top=240,
+                            )
+                        ],
+                        width=420,  # Set width of Stack to fit both containers
+                        height=320,
+                    ),
+                    ft.ElevatedButton("Go Home", on_click=lambda _: page.go("/")),
                 ],
+                vertical_alignment=ft.MainAxisAlignment.CENTER,
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             )
             )
             def receive_data():
                 try:
                     while True:
                         data = client_socket.recv(4096).decode()
-                        cpu, ram, gpu = data.split("|")
+                        cpu, ram, gpu, disk_total, disk_used, disk_percent = data.split("|")
                         
-                        print(f"CPU: {cpu}%\nRAM: {ram}%\nGPU: {gpu}%")
+                        print(f"CPU: {cpu}%\nRAM: {ram}%\nGPU: {gpu}%\n[DISCO: {disk_used}/{disk_total}/{disk_percent}%]")                        
+                         
+                        cpu_text.value = f"{cpu}%"
+                        ram_text.value = f"{ram}%"
+                        gpu_text.value = f"{gpu}%"
+                        disk_usage_text.value = f"{float(disk_used):.2f} GB"
+                        disk_total_text.value = f"{float(disk_total):.2f} GB"
+                        disk_percent_text.value = f"{disk_percent}"
+
+                        disk_progress_bar.value = float(disk_percent) / 100  # Converte o valor em fração
+                        disk_progress_bar.update()
+  
                         output_text.value = f"{data}\n"
                         output_text.update()
-                        
-                        #print(output_text.value)
+                        cpu_text.update()
+                        ram_text.update()
+                        gpu_text.update()
+                        disk_usage_text.update()
+                        disk_total_text.update()
+                        disk_percent_text.update()
+
                         
                         if not data:
                             output_text.value = f"Conexão encerrada com {client_socket.sharer_username}.\n"

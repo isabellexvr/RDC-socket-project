@@ -48,7 +48,7 @@ def handle_client(client_socket):
                 while True:
                     dados = compartilhadores[username]['dados']
                     if dados:
-                        client_socket.send(f"Dados de {username}: {dados}\n".encode())
+                        client_socket.send(f"{dados}".encode())
                     time.sleep(5)
             else:
                 client_socket.send("Username não encontrado.\n".encode())
