@@ -67,6 +67,7 @@ def main(page: ft.Page):
     page.title = "System Data Sharing Client"
     page.vertical_alignment = ft.VerticalAlignment.CENTER
     page.horizontal_alignment = ft.alignment.center
+    page.theme_mode = ft.ThemeMode.DARK
     
     # Inicializando os componentes de texto para CPU, RAM, e GPU
     cpu_text = ft.Text("40%", font_family="Space Grotesk", weight=ft.FontWeight.BOLD, size=20)
@@ -84,20 +85,46 @@ def main(page: ft.Page):
                 "/",
                 [
                     ft.AppBar(title=ft.Text("MSI de Probe"), bgcolor=ft.colors.SURFACE_VARIANT),
+                    
+                    ft.Row(
+                        [
+                            ft.Container(
+                                width=400,
+                                height=400,  # Define a altura para o container
+                                content=ft.Image(
+                                    src="home.png",  # Nome da imagem no mesmo diretório
+                                )
+                            ),
+                            ft.Column(
+                                [
+                                    ft.Column(
+                                        [
+                                            ft.Text("Bem-vindo ao MSI de Probe!", size=30, weight=ft.FontWeight.BOLD, color=ft.colors.BLUE, font_family="Space Grotesk"),
+                                            ft.Text("Compartilhe seus dados de sistema com outros usuários ou solicite dados de outros usuários.", size=15, color=ft.colors.WHITE, width=400, no_wrap=False, text_align=ft.TextAlign.RIGHT),
+                                        ]
+                                    ),                                      
+                                ]
+                            ),
+
+                        ],
+                        alignment=ft.MainAxisAlignment.CENTER,  # Centraliza o Row
+                    ),
+
                     ft.ElevatedButton("Iniciar", on_click=lambda _: page.go("/server_ip")),
                 ],
+                
                 vertical_alignment=ft.MainAxisAlignment.CENTER,
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             )
         )
         if page.route == "/as_sharer":
-            username_input = ft.TextField(label="Username")
+            username_input = ft.TextField(label="Username", border_color="#0c8ce9", width=500)
             output_text = ft.Text()
             
             def on_register_click(e):
                 register_as_sharer(client_socket, username_input.value, output_text)
             
-            register_button = ft.ElevatedButton(text="Register as Sharer", on_click=on_register_click)
+            register_button = ft.ElevatedButton(text="Register as Sharer", on_click=on_register_click, bgcolor="#0c8ce9")
             page.views.append(
                 ft.View(
                     "/as_sharer",
@@ -112,14 +139,14 @@ def main(page: ft.Page):
                 )
             )
         if page.route == "/requester":
-            sharer_username_input = ft.TextField(label="Sharer Username")
+            sharer_username_input = ft.TextField(label="Sharer Username", border_color="#0c8ce9", width=500)
             output_text = ft.Text()
             
             def on_request_click(e):
                 request_sharer_data(client_socket, sharer_username_input.value, output_text)
                 page.go("/show_data")
             
-            request_button = ft.ElevatedButton(text="Request Sharer Data", on_click=on_request_click)
+            request_button = ft.ElevatedButton(text="Request Sharer Data", on_click=on_request_click, bgcolor="#0c8ce9")
             page.views.append(
                 ft.View(
                     "/requester",
@@ -145,7 +172,7 @@ def main(page: ft.Page):
                 )
             )
         if page.route == "/server_ip":
-            ip_input = ft.TextField(label="Server IP", width=500, border_color=ft.colors.WHITE)
+            ip_input = ft.TextField(label="Server IP", width=500, border_color="#0c8ce9")
             alert_text = ft.Text(color=ft.colors.RED)
             
             def submit_ip(ip):
@@ -160,7 +187,7 @@ def main(page: ft.Page):
                     alert_text.value = f"Erro ao conectar: {e}"
                     alert_text.update()
                 
-            submit_button = ft.ElevatedButton("Submit", on_click=lambda _: submit_ip(ip_input.value), bgcolor=ft.colors.BLUE, color=ft.colors.WHITE)
+            submit_button = ft.ElevatedButton("Submit", on_click=lambda _: submit_ip(ip_input.value), bgcolor="#0c8ce9")
             #home_button = ft.ElevatedButton("Vai", on_click=lambda _: page.go())
             page.views.append(
             ft.View(
