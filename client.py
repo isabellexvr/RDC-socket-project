@@ -242,6 +242,7 @@ def main(page: ft.Page):
                                 ram_text,
                                 disk_total_text,
                                 disk_usage_text,
+                                battery_status_icon,
                             ],
                         ),
                         visible=False  # Define o container como invisível
