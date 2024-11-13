@@ -23,17 +23,15 @@ def get_system_data():
 
 def register_as_sharer(client_socket, username, output_text):
     print("Sending '1' for sharer registration")
-    client_socket.send("1".encode())  # Send "1" for sharer
+    client_socket.send("1".encode()) 
     response1 = client_socket.recv(1024).decode()
     print("Response after sending '1':", response1)
-    
-    # Send the username immediately after receiving response1
+
     print("Sending username:", username)
     client_socket.send(username.encode())
     response2 = client_socket.recv(1024).decode()
     print("Response after sending username:", response2)
     
-    # Ensure response is correctly referenced
     if "sucesso" in response2:
         output_text.value = "Você agora está compartilhando seus dados do sistema...\n"
         output_text.update()
@@ -57,7 +55,7 @@ def send_system_data(client_socket, system_data, output_text):
     output_text.update()
 
 def request_sharer_data(client_socket, sharer_username, output_text):
-    client_socket.send("2".encode())  # Send "2" for requester
+    client_socket.send("2".encode())
     response1 = client_socket.recv(1024).decode()
     print("Response after sending '2':", response1)
 
@@ -74,7 +72,6 @@ def main(page: ft.Page):
     page.horizontal_alignment = ft.alignment.center
     page.theme_mode = ft.ThemeMode.DARK
     
-    # Inicializando os componentes de texto para CPU, RAM, e GPU
     cpu_text = ft.Text("40%", font_family="Space Grotesk", weight=ft.FontWeight.BOLD, size=20)
     ram_text = ft.Text("60%", font_family="Space Grotesk", weight=ft.FontWeight.BOLD, size=20)
     battery_text = ft.Text("100%", font_family="Space Grotesk", weight=ft.FontWeight.BOLD, size=20)
@@ -96,9 +93,9 @@ def main(page: ft.Page):
                         [
                             ft.Container(
                                 width=400,
-                                height=400,  # Define a altura para o container
+                                height=400,  
                                 content=ft.Image(
-                                    src="home.png",  # Nome da imagem no mesmo diretório
+                                    src="home.png",
                                 )
                             ),
                             ft.Column(
@@ -113,7 +110,7 @@ def main(page: ft.Page):
                             ),
 
                         ],
-                        alignment=ft.MainAxisAlignment.CENTER,  # Centraliza o Row
+                        alignment=ft.MainAxisAlignment.CENTER, 
                     ),
 
                     ft.ElevatedButton("Iniciar", on_click=lambda _: page.go("/server_ip")),
@@ -194,7 +191,6 @@ def main(page: ft.Page):
                     alert_text.update()
                 
             submit_button = ft.ElevatedButton("Submit", on_click=lambda _: submit_ip(ip_input.value), bgcolor="#0c8ce9")
-            #home_button = ft.ElevatedButton("Vai", on_click=lambda _: page.go())
             page.views.append(
             ft.View(
                 "/server_ip",
@@ -245,7 +241,7 @@ def main(page: ft.Page):
                                 battery_status_icon,
                             ],
                         ),
-                        visible=False  # Define o container como invisível
+                        visible=False
                     ),
                     ft.Stack(
                         [
@@ -254,12 +250,12 @@ def main(page: ft.Page):
                                     controls=[
                                         ft.Text("CPU Usage", size=15),
                                         cpu_text,
-                                    ],  # Adicionando os textos ao Column
+                                    ], 
                                 ),
                                 width=200,
                                 height=100,
                                 bgcolor="#293038",
-                                left=0,  # Position at the start of the Stack
+                                left=0, 
                                 top=0,
                                 border_radius=12,
                                 padding=15,
@@ -269,12 +265,12 @@ def main(page: ft.Page):
                                     controls=[
                                         ft.Text("Memory Usage", size=15),
                                         ram_text,
-                                    ],# Adicionando os textos ao Column
+                                    ],
                                 ),
                                 width=200,
                                 height=100,
                                 bgcolor="#293038",
-                                left=210,  # Position this container next to the first
+                                left=210,
                                 top=0,
                                 border_radius=12,
                                 padding=15,
@@ -288,7 +284,7 @@ def main(page: ft.Page):
                                                 ft.Text("Battery Status", size=15),
                                                 battery_text,
                                                 battery_plug_status,
-                                            ],# Adicionando os textos ao Column
+                                            ],
                                         ),
                                         width=410,
                                         height=150,
@@ -319,11 +315,11 @@ def main(page: ft.Page):
                                         ),
                                     )
                                 ],
-                                top=120,  # Position this container next to the first
+                                top=120,
                                 left=0,
                             ),
                         ],
-                        width=420,  # Set width of Stack to fit both containers
+                        width=420,
                         height=320,
                     ),
                     ft.ElevatedButton("Logout", on_click=lambda _: page.go("/home")),
@@ -358,7 +354,7 @@ def main(page: ft.Page):
                         disk_percent_text.value = f"{disk_percent}"
                         battery_plug_text.value = f"{battery_plug}"
 
-                        disk_progress_bar.value = float(disk_percent) / 100  # Converte o valor em fração
+                        disk_progress_bar.value = float(disk_percent) / 100 
                         disk_progress_bar.update()
                                               
   

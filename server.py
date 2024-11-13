@@ -3,7 +3,7 @@ import threading
 import time
 import psutil
 
-# Dicionário para armazenar os compartilhadores e seus dados
+
 compartilhadores = {}
 
 def handle_client(client_socket):
@@ -12,7 +12,6 @@ def handle_client(client_socket):
         print("sent option: ", option)
 
         if option == '1':
-            # Handle the client as a sharer
             client_socket.send("Envie seu username:\n".encode())
             username = client_socket.recv(1024).decode().strip()
             print("Received username:", username)
@@ -24,7 +23,6 @@ def handle_client(client_socket):
                     'dados': ''
                 }
                 client_socket.send(f"sucesso!\n".encode())
-                #client_socket.send("Agora seus dados estão sendo compartilhados...\n".encode())
 
                 while True:
                     try:
@@ -39,7 +37,6 @@ def handle_client(client_socket):
                     time.sleep(1)
 
         elif option == '2':
-            # Handle the client as a requester
             client_socket.send("Envie seu username:\n".encode())
             username = client_socket.recv(1024).decode().strip()
             print("Received username:", username)
@@ -67,6 +64,5 @@ print("Servidor escutando na LAN...")
 while True:
     client_socket, addr = server_socket.accept()
     print(f"Conexão de {addr}")
-    # Inicia uma nova thread para lidar com cada cliente conectado
     client_handler = threading.Thread(target=handle_client, args=(client_socket,))
     client_handler.start()
